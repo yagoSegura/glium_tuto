@@ -4,7 +4,7 @@ extern crate glium;
 fn main() {
     println!("Welcome to opengl glium");
 
-    use glium::glutin;
+    use glium::{glutin,Surface};
 
     // 1 . Creating an eventsLoop for handling window and device events
     let mut events_loop = glutin::EventsLoop::new();
@@ -27,7 +27,12 @@ fn main() {
     // 5. Keep the window open till the close event fires
     let mut closed = false;
     while !closed{
-        // listing the events produced by application and waiting to be received
+        // 6 . Produce a frame to draw
+        let mut target = display.draw();
+        target.clear_color(0.0,0.0,1.0,1.0);
+        target.finish().unwrap();
+
+        // 7 . listing the events produced by application and waiting to be received
         events_loop.poll_events(|ev|{
             match ev {
                 glutin::Event::WindowEvent {event, ..} => match event {

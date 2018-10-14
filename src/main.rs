@@ -23,4 +23,19 @@ fn main() {
     //     This builds a Display using the given window and context attributes,
     //     and registers the window with the given events_loop.
     let display = glium::Display::new(window,context,&events_loop).unwrap();
+
+    // 5. Keep the window open till the close event fires
+    let mut closed = false;
+    while !closed{
+        // listing the events produced by application and waiting to be received
+        events_loop.poll_events(|ev|{
+            match ev {
+                glutin::Event::WindowEvent {event, ..} => match event {
+                    glutin::WindowEvent::CloseRequested => closed = true,
+                    _ => (),
+                },
+                _ => (),
+            }
+        });
+    }
 }

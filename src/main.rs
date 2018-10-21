@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate glium;
+extern crate image;
 
 /**
     Tutorial obtenido de https://github.com/glium/glium/tree/master/book
@@ -15,16 +16,27 @@ fn main() {
     let context = glutin::ContextBuilder::new();
     let display = glium::Display::new(window,context,&events_loop).unwrap();
 
+    use std::io::Cursor;
+
+    //TODO : Incluye una ruta a una imagen &include_bytes ...
+
+    let image = image::load(Cursor::new(&include_bytes!("")[..]), image::PNG).unwrap().to_rgba();
+    let image_dimensions = image.dimensions();
+    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
+
+    let texture = glium::texture::Texture2d::new(&display, image).unwrap();
+
     #[derive(Copy, Clone)]
     struct Vertex{
         position: [f32; 2],
+        tex_cords: [f32; 2],
     }
 
-    implement_vertex!(Vertex, position);
+    implement_vertex!(Vertex, position, tex_cords);
 
-    let vertex1 = Vertex {position: [-0.5,-0.5]};
-    let vertex2 = Vertex {position: [0.0,0.5]};
-    let vertex3 = Vertex {position: [0.5,-0.25]};
+    let vertex1 = Vertex {position: [-0.5,-0.5], tex_cords: [0.0, 0.0]};
+    let vertex2 = Vertex {position: [0.0,0.5], tex_cords: [0.0, 1.0]};
+    let vertex3 = Vertex {position: [0.5,-0.25], tex_cords: [1.0, 0.0]};
     let shape = vec![vertex1,vertex2,vertex3];
 
     let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
@@ -34,12 +46,13 @@ fn main() {
         #version 140
 
         in vec2 position;
-        out vec2 my_attr;
+        in vec2 tex_coords;
+        out vec2 v_tex_coords;
 
         uniform mat4 matrix;
 
         void main(){
-            my_attr = position;
+            v_tex_coords = tex_coords;
             gl_Position = matrix * vec4(position,0.0,1.0);
         }
     "#;
@@ -47,11 +60,11 @@ fn main() {
     let fragment_shader_src = r#"
         #version 140
 
-        in vec2 my_attr;
+        in vec2 v_tex_coords;
         out vec4 color;
 
         void main(){
-            color = vec4(my_attr,0.0,1.0);
+            color = texture(tex, v_tex_coords);
         }
     "#;
 
@@ -75,6 +88,7 @@ fn main() {
                 [-t.sin(), t.cos(), 0.0, 0.0],
                 [0.0, 0.0, 1.0, 0.0],
                 [0.0, 0.0, 0.0, 1.0f32],
+                tex: &texture,
             ]
         };
 
